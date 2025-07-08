@@ -1,0 +1,107 @@
+---
+title: "Longshore Sand Transport on Long Island's South Shore"
+author: "Maya Maciel-Seidman"
+date: "2025-04-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+waves <- read.csv("2012 wave data.csv")
+K_sand <- 40
+```
+
+```{r}
+wave_height <- waves$Column9
+wave_height <- wave_height[3:8778]
+wave_height <- as.double(wave_height)
+```
+
+```{r}
+wave_direction <- waves$Column12
+wave_direction <- wave_direction[3:8778]
+wave_direction <- as.double(wave_direction)
+```
+
+```{r}
+date <- make_datetime(as.integer(waves$Column1[3:8778]), as.integer(waves$Column2[3:8778]), as.integer(waves$Column3[3:8778]), as.integer(waves$Column4[3:8778]), as.integer(waves$Column5[3:8778]))
+
+waves_2012 <- data.frame(date, wave_height, wave_direction)
+waves_2012 <- waves_2012 %>% filter(wave_height != 99.00)
+
+wave_height_oct_nov <- waves_2012$wave_height[6510:7967]
+date_oct_nov <- waves_2012$date[6510:7967]
+wave_height_2012_oct_nov <- data.frame(date_oct_nov, wave_height_oct_nov)
+```
+
+```{r}
+wave_direction_2 <- 2 * waves_2012$wave_direction
+sin_wave_direction_2 <- sin(wave_direction_2)
+```
+
+```{r}
+wave_height_cubed <- waves_2012$wave_height ^ 3
+```
+
+```{r}
+longshore_transport <- K_sand * wave_height_cubed * sin_wave_direction_2
+longshore_transport <- abs(longshore_transport)
+```
+
+```{r}
+longshore_transport_2012 <- data.frame(waves_2012$date, longshore_transport)
+longshore_transport_oct_nov <- longshore_transport[6510:7967]
+longshore_transport_2012_oct_nov <- data.frame(date_oct_nov, longshore_transport_oct_nov)
+```
+
+```{r}
+ggplot(data = longshore_transport_2012, aes(x = waves_2012.date, y = longshore_transport)) +
+  geom_line(color = "blue") +
+  theme_classic() +
+  labs(x = "Date", y = "Longshore Sand Transport (kg/s; dry mass)", title = 
+         "Longshore Sand Transport on Long Island's South Shore 2012") +
+  theme(axis.text.x = element_text(color = "black")) +
+  theme(axis.text.y = element_text(color = "black"))
+```
+
+```{r}
+ggplot(data = longshore_transport_2012_oct_nov, aes(x = date_oct_nov, y = longshore_transport_oct_nov)) +
+  geom_line(color = "blue", size = 0.75) +
+  theme_classic() +
+  labs(x = "Date", y = "Longshore Sand Transport (kg/s; dry mass)",
+       title = "Longshore Sand Transport on Long Island's South Shore Oct-Nov 2012") +
+  theme(axis.text.x = element_text(color = "black")) +
+  theme(axis.text.y = element_text(color = "black"))
+```
+
+
+```{r}
+ggplot(data = waves_2012, aes(x = date, y = wave_height)) +
+  geom_line(color = "red") +
+  theme_classic() +
+  labs(x = "Date", y = "Wave Height (m)", title = "Wave Height on Long Island's South Shore 2012") +
+  theme(axis.text.x = element_text(color = "black")) +
+  theme(axis.text.y = element_text(color = "black"))
+```
+
+
+```{r}
+ggplot(data = wave_height_2012_oct_nov, aes(x = date_oct_nov, y = wave_height_oct_nov)) +
+  geom_line(color = "red", size = 0.75) +
+  theme_classic() +
+  labs(x = "Date", y = "Wave Height (m)", title = "Wave Height on Long Island's South Shore Oct-Nov 2012") +
+  theme(axis.text.x = element_text(color = "black")) +
+  theme(axis.text.y = element_text(color = "black"))
+```
+
+```{r}
+head(longshore_transport_2012[order(-longshore_transport), ])
+
+wave_height_2012 <- waves_2012 %>% select(date, wave_height)
+
+head(waves_2012[order(waves_2012$wave_height, decreasing = TRUE),])
+```
+
